@@ -7,21 +7,53 @@
 //
 
 #import "ViewController.h"
+#import "Reachability.h"
+
+//使用cocoaPods管理，在https://github.com/tonymillion/Reachability下载
 
 @interface ViewController ()
 
+@property (nonatomic, strong) Reachability *reachablityManager;
 @end
 
 @implementation ViewController
+- (void)dealloc {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+    // 停止监听网络状态
+    [self.reachablityManager stopNotifier];
+}
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    // Do any additional setup after loading the view, typically from a nib.
+    
+    [[NSNotificationCenter defaultCenter ] addObserver:self selector:@selector(networkStatusChanged) name:kReachabilityChangedNotification object:nil];
+    [self.reachablityManager startNotifier];
 }
 
-- (void)didReceiveMemoryWarning {
-    [super didReceiveMemoryWarning];
-    // Dispose of any resources that can be recreated.
+/**
+ *  网络状态改变的回调方法
+ */
+- (void)networkStatusChanged {
+    // 获得当前的网络状态
+    NetworkStatus status = [self.reachablityManager currentReachabilityStatus];
+    switch (status) {
+        case NotReachable:
+            NSLog(@"没有可用网络");
+            break;
+        case ReachableViaWiFi:
+            NSLog(@"wifi");
+            break;
+        case ReachableViaWWAN:
+            NSLog(@"3G/4G");
+            break;
+    }
 }
-
+//懒加载
+- (Reachability *)reachablityManager {
+    if (_reachablityManager == nil) {
+        // 公司服务器域名
+        _reachablityManager = [Reachability reachabilityWithHostName:@"baidu.com"];
+    }
+    return _reachablityManager;
+}
 @end
